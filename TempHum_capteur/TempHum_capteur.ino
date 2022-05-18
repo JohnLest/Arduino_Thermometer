@@ -1,48 +1,41 @@
 #include "DHT.h"
+#include "ShiftRegister.h"
 
 #define BUTTON1 A1
 #define BUTTON2 A2
 
-const byte serPin = 8;     // Pin Serial
-const byte rClkPin = 4;    // Register Clock
-const byte sClkPin = 7;    // Serial Clock
+ShiftRegister reg(8, 4, 7, 2);
 
-// Combier de Registre a decallage y a t'il?
-const int number_of_74hc595s = 2;
-// Nombre total de sortie (nombre de registre * 8)
-const int numOfRegisterPins = number_of_74hc595s * 8;
-// Tableau qui donnera le nombre de pin total
-boolean registers[numOfRegisterPins];
-
-typedef struct Number {
+typedef struct Number
+{
   short value;
   bool led[8];
 };
-Number number[12] {
-  // {A, B, C, D, E, F, G, DP}
-  0, {0, 0, 0, 0, 0, 0, 1, 1},
-  1, {1, 0, 0, 1, 1, 1, 1, 1},
-  2, {0, 0, 1, 0, 0, 1, 0, 1},
-  3, {0, 0, 0, 0, 1, 1, 0, 1},
-  4, {1, 0, 0, 1, 1, 0, 0, 1},
-  5, {0, 1, 0, 0, 1, 0, 0, 1},
-  6, {0, 1, 0, 0, 0, 0, 0, 1},
-  7, {0, 0, 0, 1, 1, 1, 1, 1},
-  8, {0, 0, 0, 0, 0, 0, 0, 1},
-  9, {0, 0, 0, 0, 1, 0, 0, 1},
-  10, {1, 1, 0, 1 ,0, 0, 0, 0},
-  11, {1, 1, 1, 0, 0, 1, 0, 0}
-};
+Number number[12]{
+    // {A, B, C, D, E, F, G, DP}
+    0,{0, 0, 0, 0, 0, 0, 1, 1},
+    1,{1, 0, 0, 1, 1, 1, 1, 1},
+    2,{0, 0, 1, 0, 0, 1, 0, 1},
+    3,{0, 0, 0, 0, 1, 1, 0, 1},
+    4,{1, 0, 0, 1, 1, 0, 0, 1},
+    5,{0, 1, 0, 0, 1, 0, 0, 1},
+    6,{0, 1, 0, 0, 0, 0, 0, 1},
+    7,{0, 0, 0, 1, 1, 1, 1, 1},
+    8,{0, 0, 0, 0, 0, 0, 0, 1},
+    9,{0, 0, 0, 0, 1, 0, 0, 1},
+    10,{1, 1, 0, 1, 0, 0, 0, 0},
+    11,{1, 1, 1, 0, 0, 1, 0, 0}};
 
-typedef struct Digit {
+typedef struct Digit
+{
   short value;
   bool out[8];
 };
-Digit digit[4] {
-  1, {1, 0, 0, 0, 0, 0, 0, 0},
-  2, {0, 1, 0, 0, 0, 0, 0, 0},
-  3, {0, 0, 1, 0, 0, 0, 0, 0},
-  4, {0, 0, 0, 1, 0, 0, 0, 0},
+Digit digit[4]{
+    1,{1, 0, 0, 0, 0, 0, 0, 0},
+    2,{0, 1, 0, 0, 0, 0, 0, 0},
+    3,{0, 0, 1, 0, 0, 0, 0, 0},
+    4,{0, 0, 0, 1, 0, 0, 0, 0},
 };
 
 bool point[8] = {1, 1, 1, 1, 1, 1, 1, 0};
@@ -52,15 +45,9 @@ DHT dht(5, DHT11);
 
 void setup()
 {
-  pinMode(serPin, OUTPUT);
-  pinMode(rClkPin, OUTPUT);
-  pinMode(sClkPin, OUTPUT);
-
+  reg.initRegister();
   dht.begin();
-  //Serial.begin(9600);
-  //reset de toutes les pin de sortie
-  clearRegisters();
-  writeRegisters();
+  // Serial.begin(9600);
 }
 
 void loop()
@@ -85,7 +72,8 @@ float getTemperature()
   return t;
 }
 
-void printTemp() {
+void printTemp()
+{
   float t = getTemperature();
   String th = String(t, 1);
   th.remove(2, 1);
@@ -96,13 +84,13 @@ void printTemp() {
   printPoint(2);
 }
 
-void printHum() {
+void printHum()
+{
   float h = getHumidity();
   String hum = String(int(h));
   printNumber(1, 10);
   printNumber(3, hum.charAt(0) - '0');
   printNumber(4, hum.charAt(1) - '0');
-
 }
 float getHumidity()
 {
@@ -114,58 +102,22 @@ float getHumidity()
   return h;
 }
 
-//set toute les pin a LOW
-void clearRegisters()
+void printNumber(short out, short num)
 {
-  for (int i = numOfRegisterPins - 1; i >= 0; i--)
-    registers[i] = LOW;
-
-  for (int i = numOfRegisterPins - 1; i >= 8 ; i--)
-    registers[i] = HIGH;
-}
-
-void printNumber(short out, short num) {
-  clearRegisters();
+  reg.clearRegister();
   for (int i = 0; i < 8; i++)
-    setRegisterPin(i, digit[out - 1].out[i]);
+    reg.setRegisterPin(i, digit[out - 1].out[i]);
   for (int i = 8; i < 16; i++)
-    setRegisterPin(i, number[num].led[i - 8]);
-  writeRegisters();
+    reg.setRegisterPin(i, number[num].led[i - 8]);
+  reg.writeRegister();
 }
 
-void printPoint(short out) {
-  clearRegisters();
+void printPoint(short out)
+{
+  reg.clearRegister();
   for (int i = 0; i < 8; i++)
-    setRegisterPin(i, digit[out - 1].out[i]);
+    reg.setRegisterPin(i, digit[out - 1].out[i]);
   for (int i = 8; i < 16; i++)
-    setRegisterPin(i, point[i - 8]);
-  writeRegisters();
-}
-
-// affectation des valeurs enregistrées dans le tableau "registres" et application des valeurs �  la fin.
-void writeRegisters()
-{
-  // tant que LOW les modifications ne seront pas affectées
-  digitalWrite(rClkPin, LOW);
-
-  // boucle pour affecter chaque pin du 74HC595
-  for (int i = numOfRegisterPins - 1; i >= 0; i--)
-  {
-    // doit être à l'état bas pour changer de colonne plus tard
-    digitalWrite(sClkPin, LOW);
-    // récupération de la valeur dans le tableau registres
-    int val = registers[i];
-    // affecte la valeur sur la pin serPin correspondant à une pine du 74HC595
-    digitalWrite(serPin, val);
-    // colonne suivante
-    digitalWrite(sClkPin, HIGH);
-  }
-  // applique toutes les valeurs au 74HC595
-  digitalWrite(rClkPin, HIGH);
-}
-
-// enregistre une valeur pour un registre état haut ou bas
-void setRegisterPin(int index, int valeur)
-{
-  registers[index] = valeur;
+    reg.setRegisterPin(i, point[i - 8]);
+  reg.writeRegister();
 }

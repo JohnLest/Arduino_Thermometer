@@ -1,57 +1,24 @@
 #include "DHT.h"
-#include "ShiftRegister.h"
+#include "SevenSegments.h"
 
 #define BUTTON1 A1
 #define BUTTON2 A2
 
-ShiftRegister reg(8, 4, 7, 2);
-
-typedef struct Number
-{
-  short value;
-  bool led[8];
-};
-Number number[12]{
-    // {A, B, C, D, E, F, G, DP}
-    0,{0, 0, 0, 0, 0, 0, 1, 1},
-    1,{1, 0, 0, 1, 1, 1, 1, 1},
-    2,{0, 0, 1, 0, 0, 1, 0, 1},
-    3,{0, 0, 0, 0, 1, 1, 0, 1},
-    4,{1, 0, 0, 1, 1, 0, 0, 1},
-    5,{0, 1, 0, 0, 1, 0, 0, 1},
-    6,{0, 1, 0, 0, 0, 0, 0, 1},
-    7,{0, 0, 0, 1, 1, 1, 1, 1},
-    8,{0, 0, 0, 0, 0, 0, 0, 1},
-    9,{0, 0, 0, 0, 1, 0, 0, 1},
-    10,{1, 1, 0, 1, 0, 0, 0, 0},
-    11,{1, 1, 1, 0, 0, 1, 0, 0}};
-
-typedef struct Digit
-{
-  short value;
-  bool out[8];
-};
-Digit digit[4]{
-    1,{1, 0, 0, 0, 0, 0, 0, 0},
-    2,{0, 1, 0, 0, 0, 0, 0, 0},
-    3,{0, 0, 1, 0, 0, 0, 0, 0},
-    4,{0, 0, 0, 1, 0, 0, 0, 0},
-};
-
-bool point[8] = {1, 1, 1, 1, 1, 1, 1, 0};
 bool showTemp = true;
 
+SevenSegments sev_seg(8, 4, 7, 2);
 DHT dht(5, DHT11);
 
 void setup()
 {
-  reg.initRegister();
   dht.begin();
-  // Serial.begin(9600);
+  sev_seg.initSevenSegments();
+  Serial.begin(9600);
 }
 
 void loop()
 {
+
   if (!digitalRead(BUTTON1))
     showTemp = true;
   if (!digitalRead(BUTTON2))
@@ -60,6 +27,7 @@ void loop()
     printTemp();
   else
     printHum();
+  //Serial.println(showTemp);
 }
 
 float getTemperature()
@@ -72,26 +40,6 @@ float getTemperature()
   return t;
 }
 
-void printTemp()
-{
-  float t = getTemperature();
-  String th = String(t, 1);
-  th.remove(2, 1);
-  printNumber(1, th.charAt(0) - '0');
-  printNumber(2, th.charAt(1) - '0');
-  printNumber(3, th.charAt(2) - '0');
-  printNumber(4, 11);
-  printPoint(2);
-}
-
-void printHum()
-{
-  float h = getHumidity();
-  String hum = String(int(h));
-  printNumber(1, 10);
-  printNumber(3, hum.charAt(0) - '0');
-  printNumber(4, hum.charAt(1) - '0');
-}
 float getHumidity()
 {
   float h = dht.readHumidity();
@@ -102,22 +50,20 @@ float getHumidity()
   return h;
 }
 
-void printNumber(short out, short num)
+void printTemp()
 {
-  reg.clearRegister();
-  for (int i = 0; i < 8; i++)
-    reg.setRegisterPin(i, digit[out - 1].out[i]);
-  for (int i = 8; i < 16; i++)
-    reg.setRegisterPin(i, number[num].led[i - 8]);
-  reg.writeRegister();
+  float t = getTemperature();
+  sev_seg.print(1, int(t/10)%10);
+  sev_seg.print(2, int(t)%10);
+  sev_seg.print(2);
+  sev_seg.print(3, int(t*10)%10);
+  sev_seg.print(4, 11);
 }
 
-void printPoint(short out)
+void printHum()
 {
-  reg.clearRegister();
-  for (int i = 0; i < 8; i++)
-    reg.setRegisterPin(i, digit[out - 1].out[i]);
-  for (int i = 8; i < 16; i++)
-    reg.setRegisterPin(i, point[i - 8]);
-  reg.writeRegister();
+  float h = getHumidity();
+  sev_seg.print(1, 10);
+  sev_seg.print(3, int(h/10)%10);
+  sev_seg.print(4, int(h)%10);
 }

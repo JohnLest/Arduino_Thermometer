@@ -26,22 +26,22 @@ void ShiftRegister::initRegister()
 }
 void ShiftRegister::clearRegister()
 {
-    for (int i = _numOfRegisterPins - 1; i >= 0; i--)
+    for (short i = _numOfRegisterPins - 1; i >= 0; i--)
         _registers[i] = LOW;
 }
 void ShiftRegister::writeRegister()
 {
     digitalWrite(_rClkPin, LOW);
-    for (int i = _numOfRegisterPins - 1; i >= 0; i--)
+    for (short i = _numOfRegisterPins - 1; i >= 0; i--)
     {
         digitalWrite(_sClkPin, LOW);
-        int val = _registers[i];
+        bool val = _registers[i];
         digitalWrite(_serPin, val);
         digitalWrite(_sClkPin, HIGH);
     }
     digitalWrite(_rClkPin, HIGH);
 }
-void ShiftRegister::setRegisterPin(int index, int value)
+void ShiftRegister::setRegisterPin(short index, bool value)
 {
     _registers[index] = value;
 }

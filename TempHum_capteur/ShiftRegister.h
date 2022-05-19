@@ -23,7 +23,7 @@ public:
     void initRegister();
     void clearRegister();
     void writeRegister();
-    void setRegisterPin(int index, int value);
+    void setRegisterPin(short index, bool value);
     ~ShiftRegister();
 
 };

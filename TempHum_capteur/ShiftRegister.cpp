@@ -8,42 +8,42 @@ ShiftRegister::ShiftRegister(
     uint8_t serialClock,
     uint8_t numberShiftRegister)
 {
-    _serPin = serialPin;
-    _rClkPin = registerClock;
-    _sClkPin = serialClock;
-    _numberShiftRegister = numberShiftRegister;
-    _numOfRegisterPins = _numberShiftRegister * 8;
-    _registers[_numOfRegisterPins];
+    m_serPin = serialPin;
+    m_rClkPin = registerClock;
+    m_sClkPin = serialClock;
+    m_numberShiftRegister = numberShiftRegister;
+    m_numOfRegisterPins = m_numberShiftRegister * 8;
+    m_registers[m_numOfRegisterPins];
 }
 
 void ShiftRegister::initRegister()
 {
-    pinMode(_serPin, OUTPUT);
-    pinMode(_rClkPin, OUTPUT);
-    pinMode(_sClkPin, OUTPUT);
+    pinMode(m_serPin, OUTPUT);
+    pinMode(m_rClkPin, OUTPUT);
+    pinMode(m_sClkPin, OUTPUT);
     clearRegister();
     writeRegister();
 }
 void ShiftRegister::clearRegister()
 {
-    for (short i = _numOfRegisterPins - 1; i >= 0; i--)
-        _registers[i] = LOW;
+    for (short i = m_numOfRegisterPins - 1; i >= 0; i--)
+        m_registers[i] = LOW;
 }
 void ShiftRegister::writeRegister()
 {
-    digitalWrite(_rClkPin, LOW);
-    for (short i = _numOfRegisterPins - 1; i >= 0; i--)
+    digitalWrite(m_rClkPin, LOW);
+    for (short i = m_numOfRegisterPins - 1; i >= 0; i--)
     {
-        digitalWrite(_sClkPin, LOW);
-        bool val = _registers[i];
-        digitalWrite(_serPin, val);
-        digitalWrite(_sClkPin, HIGH);
+        digitalWrite(m_sClkPin, LOW);
+        bool val = m_registers[i];
+        digitalWrite(m_serPin, val);
+        digitalWrite(m_sClkPin, HIGH);
     }
-    digitalWrite(_rClkPin, HIGH);
+    digitalWrite(m_rClkPin, HIGH);
 }
 void ShiftRegister::setRegisterPin(short index, bool value)
 {
-    _registers[index] = value;
+    m_registers[index] = value;
 }
 
 ShiftRegister::~ShiftRegister() {}

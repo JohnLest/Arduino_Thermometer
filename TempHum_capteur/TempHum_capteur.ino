@@ -6,19 +6,22 @@
 
 bool showTemp = true;
 
+// Constructor of SevenSegments with param : 
+// The serial input, the regster clock, the serial clock, and the total number of shift register.
+// (The input pin 14, 12, 11 to the 74HC595)
 SevenSegments sev_seg(8, 4, 7, 2);
+// Constructor of DHT with param : 
+// Data and type of DHT
 DHT dht(5, DHT11);
 
 void setup()
 {
   dht.begin();
   sev_seg.initSevenSegments();
-  Serial.begin(9600);
 }
 
 void loop()
 {
-
   if (!digitalRead(BUTTON1))
     showTemp = true;
   if (!digitalRead(BUTTON2))
@@ -27,9 +30,10 @@ void loop()
     printTemp();
   else
     printHum();
-  //Serial.println(showTemp);
 }
 
+// Get the temperature in Celsius with the DHT11
+// return the temperature in float
 float getTemperature()
 {
   float t = dht.readTemperature();
@@ -40,9 +44,11 @@ float getTemperature()
   return t;
 }
 
-float getHumidity()
+// Get percentage of humidity with de DHT11
+// Return the percentage in tiny Int 
+uint8_t getHumidity()
 {
-  float h = dht.readHumidity();
+  uint8_t h = dht.readHumidity();
   if (isnan(h))
   {
     return NULL;
@@ -50,6 +56,7 @@ float getHumidity()
   return h;
 }
 
+// Print the temperature to the seven segments
 void printTemp()
 {
   float t = getTemperature();
@@ -60,10 +67,11 @@ void printTemp()
   sev_seg.print(4, 11);
 }
 
+// Print the humidity to the seven segments 
 void printHum()
 {
-  float h = getHumidity();
+  uint8_t h = getHumidity();
   sev_seg.print(1, 10);
-  sev_seg.print(3, int(h/10)%10);
-  sev_seg.print(4, int(h)%10);
+  sev_seg.print(3, (h/10)%10);
+  sev_seg.print(4, (h)%10);
 }

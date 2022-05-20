@@ -8,9 +8,9 @@
 #define RIGHT A3
 
 // Boolean if I push a button
-bool m_press = false;
+bool m_pushButton = false;
 // Boolean if the chrono is start
-bool m_chorono = false;
+bool m_chrono = false;
 // Variable for choice the menu. 
 uint8_t m_choice = 126;
 // Seconde for the chrono
@@ -42,24 +42,24 @@ void loop()
 // Methode for check if I press a button
 void pressButton()
 {
-  if (!digitalRead(LEFT) && !m_press)
+  if (!digitalRead(LEFT) && !m_pushButton)
   {
     m_choice--;
-    m_press = true;
+    m_pushButton = true;
   }
-  if (!digitalRead(RIGHT) && !m_press)
+  if (!digitalRead(RIGHT) && !m_pushButton)
   {
     m_choice++;
-    m_press = true;
+    m_pushButton = true;
   }
-  if (!digitalRead(SELECT) && !m_press && m_choice % 3 == 2)
+  if (!digitalRead(SELECT) && !m_pushButton && m_choice % 3 == 2)
   {
-    m_chorono = !m_chorono;
-    m_press = true;
+    m_chrono = !m_chrono;
+    m_pushButton = true;
   }
   if (digitalRead(RIGHT) && digitalRead(LEFT) && digitalRead(SELECT))
   {
-    m_press = false;
+    m_pushButton = false;
   }
 }
 
@@ -67,7 +67,7 @@ void pressButton()
 void menu()
 {
   uint8_t menu = m_choice % 3;
-  if (!m_chorono && menu != 2)
+  if (!m_chrono && menu != 2)
     m_seconde = 0;
   switch (menu % 3)
   {
@@ -110,7 +110,7 @@ uint8_t getHumidity()
 // If the Chrono is start, count the seconde
 void countSec()
 {
-  if (!m_chorono)
+  if (!m_chrono)
     return;
   static uint8_t centiSec = 0;
   centiSec++;

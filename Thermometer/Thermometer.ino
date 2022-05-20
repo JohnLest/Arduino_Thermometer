@@ -1,12 +1,20 @@
 #include "DHT.h"
 #include "SevenSegments.h"
+#include <TimerOne.h>
 
+// Define three buttons
 #define LEFT A1
 #define SELECT A2
 #define RIGHT A3
 
-bool _press = false;
-uint8_t choice = 126;
+// Boolean if I push a button
+bool m_press = false;
+// Boolean if the chrono is start
+bool m_chorono = false;
+// Variable for choice the menu. 
+uint8_t m_choice = 126;
+// Seconde for the chrono
+uint16_t m_seconde = 0;
 
 // Constructor of SevenSegments with param :
 // The serial input, the regster clock, the serial clock, and the total number of shift register.
@@ -20,7 +28,8 @@ void setup()
 {
   dht.begin();
   sev_seg.initSevenSegments();
-  Serial.begin(9600);
+  Timer1.initialize(10000);
+  Timer1.attachInterrupt(countSec);
 }
 
 void loop()
@@ -29,27 +38,38 @@ void loop()
   menu();
 }
 
+
+// Methode for check if I press a button
 void pressButton()
 {
-  if (!digitalRead(LEFT) && !_press)
+  if (!digitalRead(LEFT) && !m_press)
   {
-    choice--;
-    _press = true;
+    m_choice--;
+    m_press = true;
   }
-  if (!digitalRead(RIGHT) && !_press)
+  if (!digitalRead(RIGHT) && !m_press)
   {
-    choice++;
-    _press = true;
+    m_choice++;
+    m_press = true;
   }
-  if (digitalRead(RIGHT) && digitalRead(LEFT))
+  if (!digitalRead(SELECT) && !m_press && m_choice % 3 == 2)
   {
-    _press = false;
+    m_chorono = !m_chorono;
+    m_press = true;
+  }
+  if (digitalRead(RIGHT) && digitalRead(LEFT) && digitalRead(SELECT))
+  {
+    m_press = false;
   }
 }
 
+// Methode for Set the menu with `m_choice % 3`
 void menu()
 {
-  switch (choice % 3)
+  uint8_t menu = m_choice % 3;
+  if (!m_chorono && menu != 2)
+    m_seconde = 0;
+  switch (menu % 3)
   {
   case 0:
     printTemp();
@@ -57,8 +77,8 @@ void menu()
   case 1:
     printHum();
     break;
-  case 2: 
-    sev_seg.print(1, 8);
+  case 2:
+    printChrono();
     break;
   }
 }
@@ -87,6 +107,21 @@ uint8_t getHumidity()
   return h;
 }
 
+// If the Chrono is start, count the seconde
+void countSec()
+{
+  if (!m_chorono)
+    return;
+  static uint8_t centiSec = 0;
+  centiSec++;
+
+  if (centiSec >= 100)
+  {
+    m_seconde++;
+    centiSec = 0;
+  }
+}
+
 // Print the temperature to the seven segments
 void printTemp()
 {
@@ -105,4 +140,17 @@ void printHum()
   sev_seg.print(1, 10);
   sev_seg.print(3, (h / 10) % 10);
   sev_seg.print(4, (h) % 10);
+}
+
+// Print the time of the chronometer
+void printChrono()
+{
+  uint8_t min = m_seconde / 60;
+  uint8_t sec = m_seconde % 60;
+
+  sev_seg.print(1, (min / 10) % 10);
+  sev_seg.print(2, (min) % 10);
+  sev_seg.print(2);
+  sev_seg.print(3, (sec / 10) % 10);
+  sev_seg.print(4, (sec) % 10);
 }
